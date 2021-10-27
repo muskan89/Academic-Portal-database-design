@@ -43,7 +43,6 @@ CREATE TABLE CourseOfferings
 (
 Course_id varchar(255),
 dept_name varchar(255),
-Title varchar(255),
 semester int,
 Instructor_id int,
 LTPSC varchar(255),
@@ -61,6 +60,12 @@ CREATE TABLE BatchesAllowed
     yearOfAdmission int,
     dept_name varchar(255) 
 );
+
+CREATE TABLE Department
+(
+    dept_name varchar(255) 
+);
+
 
 CREATE TABLE Student
 (
@@ -82,7 +87,7 @@ CREATE TABLE isGoingToTake
     semester int,
     foreign key(entry_num) references  student(entry_num),
     foreign key(course_id) references  courseofferings(course_id),
-    foreign key(entry_num) references student(entry_num);
+    foreign key(entry_num) references student(entry_num)
 );
 CREATE TABLE historyOfStudent
 (
