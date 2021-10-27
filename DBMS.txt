@@ -1,0 +1,105 @@
+CREATE TABLE CourseCatalogue
+(
+Course_id varchar(255),
+Title varchar(255),
+dept_name varchar(255),
+--LTPSC  varchar(255)
+Lecture int,
+Tutorial int,
+Practical int,
+SelfStudy int,
+Credit int
+primary key(course_id);
+);
+
+
+CREATE TABLE Batch_Advisor
+(
+    
+    name varchar(255), 
+    id int,
+    Batch_year int,
+    dept_name varchar(255)
+);
+CREATE TABLE Faculty
+(
+    
+    name varchar(255),
+    id int,
+    dept_name varchar(255)
+);
+CREATE TABLE PreRequisite
+(
+Course_id varchar(255),
+preRequisite_course_code varchar(255),
+foreign key (Course_id) references CourseCatalogue(Course_id)
+);
+
+
+CREATE TABLE CourseOfferings
+(
+Course_id varchar(255),
+dept_name varchar(255),
+Title varchar(255),
+semester int,
+Instructor_id int,
+LTPSC varchar(255),
+--timeslot
+cgConstraint int,
+primary key (course_id ) ,
+foreign key (Course_id) references CourseCatalogue(Course_id),
+foreign key (dept_name,Instructor_id) references Faculty (dept_name,id)
+);
+
+
+CREATE TABLE BatchesAllowed
+(
+    Course_id varchar(255),
+    yearOfAdmission int,
+    dept_name varchar(255) 
+);
+
+CREATE TABLE Student
+(
+    entry_num varchar(255),
+    student_name varchar(255), 
+    yearOfAdmission int,
+    dept_name varchar(255),
+    total_credit int, 
+    cg int,
+    primary key(entry_num)
+);
+CREATE TABLE isGoingToTake
+(
+    entry_num varchar(255),
+    Course_id varchar(255),
+    credit int, 
+    Sec_id int,
+    year int,
+    semester int,
+    foreign key(entry_num) references  student(entry_num),
+    foreign key(course_id) references  courseofferings(course_id),
+    foreign key(entry_num) references student(entry_num);
+);
+CREATE TABLE historyOfStudent
+(
+    entry_num varchar(255),
+    sem int,
+    Course_id varchar(255), 
+    grade int,
+    credit int,
+    department varchar(255),
+    yearOfAdmission int
+);
+CREATE TABLE studentsTicketRequest
+(
+    entry_num varchar(255),
+    sem int,
+    Course_id varchar(255), 
+    facultyPermission int,
+    BatchAdvisorPermission int,
+    DeanPermission int,
+    foreign key(entry_num) references student(entry_num),
+    foreign key(course_id) references courseofferings(course_id)
+    
+);
