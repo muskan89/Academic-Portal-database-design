@@ -25,8 +25,9 @@ Course_id varchar(255),
 Title varchar(255),
 semester int,
 Instructor varchar(255),
-LTPSC  varchar(255),
---Batch allowed
+LTPSC varchar(255),
+Batch_allowed_department varchar(255),
+Batch_allowed_year int,
 --timeslot
 cgConstraint int,
 foreign key (Code, Title) references CourseCatalogue(Code,Title)
@@ -43,6 +44,7 @@ day varchar(255)
 
 CREATE TABLE BATCH
 (
+    Course_id varchar(255),
     yearOfAdmission int,
     dept_name varchar(255) 
 );
@@ -54,25 +56,27 @@ CREATE TABLE Student
     yearOfAdmission int,
     dept_name varchar(255),
     total_credit int 
+    cg int;
 );
 
 CREATE TABLE isGoingToTake
 (
     entry_num varchar(255),
     Course_id varchar(255), 
-    Sec_id int,
+    --Sec_id int,
     year int,
     semester int, 
 );
 
-CREATE TABLE historyStudent
+CREATE TABLE historyOfStudent
 (
     entry_num varchar(255),
+    sem int,
     Course_id varchar(255), 
-    Sec_id int,
-    year int,
-    semester int, 
-    
+    grade int,
+    credit int,
+    department varchar(255),
+    yearOfAdmission int
 );
 
         
