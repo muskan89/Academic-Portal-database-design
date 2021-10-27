@@ -13,20 +13,23 @@ primary key(course_id);
 );
 
 
-CREATE TABLE Batch_Advisor
-(
-    
-    name varchar(255), 
-    id int,
-    Batch_year int,
-    dept_name varchar(255)
-);
+
 CREATE TABLE Faculty
 (
     
     name varchar(255),
     id int,
     dept_name varchar(255)
+);
+
+CREATE TABLE Batch_Advisor
+(
+    
+    name varchar(255), 
+    id int,
+    Batch_year int,
+    dept_name varchar(255),
+foreign key (Course_id) references Faculty(id),
 );
 CREATE TABLE PreRequisite
 (
