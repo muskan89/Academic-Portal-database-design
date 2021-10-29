@@ -3,11 +3,7 @@ CREATE TABLE CourseCatalogue
 Course_id varchar(255),
 Title varchar(255),
 dept_name varchar(255),
---LTPSC  varchar(255)
-Lecture int,
-Tutorial int,
-Practical int,
-SelfStudy int,
+L-T-P-S-C  varchar(255),
 Credit int
 primary key(course_id);
 );
@@ -87,7 +83,7 @@ CREATE TABLE isGoingToTake
     semester int,
     foreign key(entry_num) references  student(entry_num),
     foreign key(course_id) references  courseofferings(course_id),
-    foreign key(entry_num) references student(entry_num)
+    
 );
 CREATE TABLE historyOfStudent
 (
@@ -109,5 +105,29 @@ CREATE TABLE studentsTicketRequest
     DeanPermission int,
     foreign key(entry_num) references student(entry_num),
     foreign key(course_id) references courseofferings(course_id)
+    
+);
+
+
+CREATE TABLE TimeSlot
+(
+Course_id varchar(255),
+Duration varchar(255),
+startingTime varchar(255),
+endingTime varchar(255),
+day varchar(255)
+);
+
+
+CREATE TABLE courseThroughTicket
+(
+    entry_num varchar(255),
+    Course_id varchar(255),
+    credit int, 
+    Sec_id int,
+    year int,
+    semester int,
+    foreign key(entry_num) references  student(entry_num),
+    foreign key(course_id) references  courseofferings(course_id),
     
 );

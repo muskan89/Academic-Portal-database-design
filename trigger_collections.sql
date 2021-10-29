@@ -405,3 +405,25 @@ FOR EACH ROW
 EXECUTE PROCEDURE course_is_in_catalogue_or_not();
 
 
+
+
+
+CREATE OR REPLACE FUNCTION make_user(id varchar(255))
+RETURNS TRIGGER
+LANGUAGE PLPGSQL
+AS $$
+Declare 
+check varchar(255):=id;
+BEGIN
+    create user check with password 'iitropar';
+RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER _make_user
+AFTER INSERT
+ON Student
+FOR EACH ROW
+EXECUTE PROCEDURE make_user(entry_num);
+
+
