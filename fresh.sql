@@ -78,3 +78,107 @@ CREATE TABLE BatchesAllowed
     foreign key (Course_id) references CourseCatalogue(Course_id)
 );
 
+CREATE TABLE isGoingToTake
+(
+    entry_num varchar(255),
+    Course_id varchar(255),
+    credit int, 
+    Sec_id int,
+    yearOfAdmission int,
+    semester int,
+    foreign key(entry_num) references  student(entry_num),
+    foreign key(course_id) references  CourseCatalogue(course_id)
+);
+
+CREATE TABLE historyOfStudent
+(
+    entry_num varchar(255),
+    sem int,
+    Course_id varchar(255), 
+    grade int,
+    credit int,
+    department varchar(255),
+    yearOfAdmission int,
+    foreign key(entry_num) references  student(entry_num)
+);
+
+CREATE TABLE studentsTicketRequest
+(
+    entry_num varchar(255),
+    sem int,
+    Course_id varchar(255), 
+    facultyPermission varchar(255),
+    BatchAdvisorPermission varchar(255),
+    DeanPermission varchar(255),
+    foreign key(entry_num) references student(entry_num),
+    foreign key(Course_id) references CourseCatalogue(course_id)
+    
+);
+
+CREATE TABLE facultyTicketinfo
+(
+    entry_num varchar(255),
+    sem int,
+    Course_id varchar(255), 
+    facultyPermission varchar(255),
+    BatchAdvisorPermission varchar(255),
+    DeanPermission varchar(255),
+    foreign key(entry_num) references student(entry_num),
+    foreign key(Course_id) references CourseCatalogue(course_id)
+    
+);
+
+CREATE TABLE BatchAdvisorTicketinfo
+(
+    entry_num varchar(255),
+    sem int,
+    Course_id varchar(255), 
+    facultyPermission varchar(255),
+    BatchAdvisorPermission varchar(255),
+    DeanPermission varchar(255),
+    foreign key(entry_num) references student(entry_num),
+    foreign key(Course_id) references CourseCatalogue(course_id)
+    
+);
+
+CREATE TABLE DeanTicketInfo
+(
+    entry_num varchar(255),
+    sem int,
+    Course_id varchar(255), 
+    facultyPermission varchar(255),
+    BatchAdvisorPermission varchar(255),
+    DeanPermission varchar(255),
+    foreign key(entry_num) references student(entry_num),
+    foreign key(Course_id) references CourseCatalogue(course_id)
+    
+);
+
+CREATE TABLE TimeSlot
+(
+Course_id varchar(255),
+Duration varchar(255),
+startingTime varchar(255),
+endingTime varchar(255),
+day varchar(255),
+foreign key(Course_id) references CourseCatalogue(course_id)
+);
+
+CREATE TABLE Day_table
+(
+   day varchar(255),
+   PRIMARY KEY(day)
+);
+
+
+CREATE TABLE courseThroughTicket
+(
+    entry_num varchar(255),
+    Course_id varchar(255),
+    credit int, 
+    Sec_id int,
+    yearOfAdmission int,
+    semester int,
+    foreign key(entry_num) references  student(entry_num),
+    foreign key(course_id) references  CourseCatalogue(course_id)
+);
