@@ -51,6 +51,15 @@ end loop;
 
 cgpa := (points/totalCredits);
 
+update student
+set cg = cgpa
+where student.entry_num=_entry_num;
+
+update student
+set total_credits = totalCredits
+where student.entry_num=_entry_num;
+
+
 return cgpa;
 END;
 $$;

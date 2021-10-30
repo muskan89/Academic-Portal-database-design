@@ -65,6 +65,8 @@ CREATE TABLE Student
     student_name varchar(255), 
     yearOfAdmission int,
     dept_name varchar(255),
+    cg dec(10,2),
+    total_credits dec(10,2),
     primary key(entry_num)
 );
 
