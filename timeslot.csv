@@ -1,0 +1,10 @@
+﻿course_id,duration,startingtime,endingtime,day
+CS301,1hr,11:00a.m.,12:00p.m.,Monday
+CS303,1hr,9:00a.m.,10:00a.m.,Monday
+MA102,1hr,10:00a.m.,11:00a.m.,Monday
+CS301,1hr,11:00a.m.,12:00p.m.,Tuesday
+CS301,1hr,11:00a.m.,12:00p.m.,Wednesday
+CS303,1hr,9:00a.m.,10:00a.m.,Tuesday
+CS303,1hr,9:00a.m.,10:00a.m.,Wednesday
+MA102,1hr,10:00a.m.,11:00a.m.,Tuesday
+MA102,1hr,10:00a.m.,11:00a.m.,Wednesday

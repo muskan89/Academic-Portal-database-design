@@ -10,7 +10,7 @@ Course_id varchar(255),
 Title varchar(255),
 dept_name varchar(255),
 LTPSC varchar(255),
-Credit int,
+Credit dec(10,2),
 PRIMARY KEY (Course_id),
 Foreign KEY (dept_name) REFERENCES Department(dept_name)
 );
@@ -20,7 +20,7 @@ Foreign KEY (dept_name) REFERENCES Department(dept_name)
 CREATE TABLE Faculty
 (
     name varchar(255),
-    id int,
+    id varchar(255),
     dept_name varchar(255),
     PRIMARY KEY(id),
     Foreign KEY (dept_name) REFERENCES Department(dept_name)
@@ -29,7 +29,7 @@ CREATE TABLE Faculty
 CREATE TABLE Batch_Advisor
 (
     name varchar(255), 
-    id int,
+    id varchar(255),
     Batch_year int,
     dept_name varchar(255),
     foreign key (id) references Faculty(id),
@@ -41,10 +41,10 @@ CREATE TABLE CourseOfferings
 Course_id varchar(255),
 dept_name varchar(255),
 semester int,
-credit int,
-Instructor_id int,
+credit dec(10,2),
+Instructor_id varchar(255),
 LTPSC varchar(255),
-cgConstraint int,
+cgConstraint dec(10,2),
 foreign key (Course_id) references CourseCatalogue(Course_id),
 foreign key (dept_name) references Department(dept_name),
 foreign key (Instructor_id) references Faculty(id)
@@ -65,8 +65,6 @@ CREATE TABLE Student
     student_name varchar(255), 
     yearOfAdmission int,
     dept_name varchar(255),
-    total_credit int, 
-    cg int,
     primary key(entry_num)
 );
 
@@ -82,7 +80,7 @@ CREATE TABLE isGoingToTake
 (
     entry_num varchar(255),
     Course_id varchar(255),
-    credit int, 
+    credit dec(10,2), 
     Sec_id int,
     yearOfAdmission int,
     semester int,
@@ -96,7 +94,7 @@ CREATE TABLE historyOfStudent
     sem int,
     Course_id varchar(255), 
     grade int,
-    credit int,
+    credit dec(10,2),
     department varchar(255),
     yearOfAdmission int,
     foreign key(entry_num) references  student(entry_num)
@@ -175,7 +173,7 @@ CREATE TABLE courseThroughTicket
 (
     entry_num varchar(255),
     Course_id varchar(255),
-    credit int, 
+    credit varchar(255), 
     Sec_id int,
     yearOfAdmission int,
     semester int,

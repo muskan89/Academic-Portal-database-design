@@ -1,4 +1,4 @@
-CREATE or Replace FUNCTION OfferCourse(_Course_id varchar(255),_dept_name varchar(255),_semester int,_credit int,_Instructor_id int,_LTPSC varchar(255),_cgConstraint dec(10,2))
+CREATE or Replace FUNCTION OfferCourse(_Course_id varchar(255),_dept_name varchar(255),_semester int,_credit dec(10,2),_Instructor_id varchar(255),_LTPSC varchar(255),_cgConstraint dec(10,2))
   RETURNS void AS
   $BODY$
       BEGIN
@@ -13,7 +13,7 @@ CREATE or Replace FUNCTION OfferCourse(_Course_id varchar(255),_dept_name varcha
 select * from OfferCourse('CS301','CSE',5,4,'1','3-2-1-2-4',7 );
 --offerCourse procedure done
 
-CREATE or Replace FUNCTION RegisterCourse(_entry_num varchar(255),_Course_id varchar(255),_credit int, _Sec_id int,_yearOfAdmission int,_semester int)
+CREATE or Replace FUNCTION RegisterCourse(_entry_num varchar(255),_Course_id varchar(255),_credit dec(10,2), _Sec_id int,_yearOfAdmission int,_semester int)
   RETURNS void AS
   $BODY$
       BEGIN
@@ -27,3 +27,34 @@ CREATE or Replace FUNCTION RegisterCourse(_entry_num varchar(255),_Course_id var
 --to call it use this but ensure foreign key data is already present in the respective tables
 select * from RegisterCourse('2019csb1100','CS301',4,1,2019,5);
 --RegisterCourse procedure done
+
+
+
+
+CREATE OR REPLACE FUNCTION CalculateCGPA(_entry_num varchar(255))
+RETURNS dec(10,2)
+LANGUAGE plpgsql
+AS $$
+DECLARE
+points dec(10,2) := 0;
+multi dec(10,2) := 0;
+totalCredits dec(10,2) := 0;
+cgpa dec(10,2);
+see record;
+BEGIN
+
+for see in (select historyOfStudent.grade,historyOfStudent.credit from historyOfStudent where historyOfStudent.entry_num=_entry_num)loop
+multi := (see.grade) * (see.credit);
+points := points + multi;
+totalCredits := totalCredits + (see.credit);
+end loop;
+
+cgpa := (points/totalCredits);
+
+return cgpa;
+END;
+$$;
+
+--to call it use this but ensure foreign key data is already present in the respective tables
+select * from CalculateCGPA(_entry_num);
+--CalculateCGPA procedure done
