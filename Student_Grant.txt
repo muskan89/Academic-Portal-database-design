@@ -1,0 +1,13 @@
+ create user S_2019csb1100 with password '2019csb1100';
+ Grant select on coursecatalogue to S_2019csb1100;
+ Grant select on Faculty to S_2019csb1100;
+ Grant select on Batch_Advisor to S_2019csb1100;
+ Grant select on preRequisite to S_2019csb1100;
+ Grant select on courseofferings to S_2019csb1100;
+ Grant select on batchesallowed to S_2019csb1100;
+ Grant select on department to S_2019csb1100;
+ Grant select on student to S_2019csb1100;
+ Grant select, insert,update,delete on isGoingtotake to S_2019csb1100;
+ Grant select,update,insert,delete on studentsticketrequest to S_2019csb1100;
+ Grant select on timeslot to S_2019csb1100;
+ Grant select on coursethroughticket to S_2019csb1100;

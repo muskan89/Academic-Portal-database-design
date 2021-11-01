@@ -1,0 +1,1 @@
+Grant select,insert,delete,update on batchadvisorticketinfo to user;

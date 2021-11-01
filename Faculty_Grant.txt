@@ -1,0 +1,13 @@
+ create user id with password 'id';
+ Grant select on coursecatalogue to id;
+ Grant select on Faculty to id;
+ Grant select on Batch_Advisor to id;
+ Grant select on preRequisite to id;
+ Grant select, update,insert ,delete on courseofferings to id;
+ Grant select,update,insert,delete on batchesallowed to id;
+ Grant select on department to id;
+ Grant select on student to id;
+ Grant select,update,insert,delete on historyofstudent to id;
+ Grant select, update, insert,delete on facultyticketinfo to id;
+ Grant select,update,insert,delete on timeslot to id;
+ Grant select on coursethroughticket to id;
