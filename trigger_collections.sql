@@ -427,3 +427,32 @@ FOR EACH ROW
 EXECUTE PROCEDURE make_user(entry_num);
 
 
+
+
+
+
+
+
+--trigger to check if the LTPSC is same for courseofferings and coursecatalogue or not
+CREATE OR REPLACE FUNCTION LTPSC_same_or_not()
+RETURNS TRIGGER
+LANGUAGE PLPGSQL
+AS $$
+DECLARE
+one varchar(255);
+two varchar(255);
+BEGIN
+one := (select distinct CourseCatalogue.LTPSC from CourseCatalogue where CourseCatalogue.Course_id=New.Course_id);
+two := New.LTPSC;
+if(one != two)
+then raise exception 'this course LTPSC does not matches in courseofferings and coursecatalogue';
+end if;
+RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER LTPSC_checker
+Before INSERT
+ON CourseOfferings
+FOR EACH ROW
+EXECUTE PROCEDURE LTPSC_same_or_not();
