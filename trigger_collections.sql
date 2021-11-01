@@ -445,7 +445,7 @@ BEGIN
 one := (select distinct CourseCatalogue.LTPSC from CourseCatalogue where CourseCatalogue.Course_id=New.Course_id);
 two := New.LTPSC;
 if(one != two)
-then raise exception 'this course LTPSC does not matches in courseofferings and coursecatalogue';
+then raise exception 'this course LTPSC does not matches in coursecatalogue';
 end if;
 RETURN NEW;
 END;
