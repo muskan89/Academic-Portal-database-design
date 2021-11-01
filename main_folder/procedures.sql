@@ -103,3 +103,189 @@ select * from CalculateCGPA(_entry_num);
 --CalculateCGPA procedure done
 
 
+
+
+
+--trigger to check if the course, student going to insert is fulfilling the cg constraint or not
+CREATE OR REPLACE FUNCTION cg_constraint_checking()
+RETURNS TRIGGER
+LANGUAGE PLPGSQL
+AS $$
+DECLARE
+cgpa dec(10,2) := 0;
+BEGIN
+    cgpa := (select Student.cg from Student where Student.entry_num=New.entry_num);
+    if(cgpa < (select CourseOfferings.cgConstraint from CourseOfferings where CourseOfferings.Course_id=New.Course_id))
+    then raise exception 'student has not fulfilled cgpa-constraint of the course';
+    end if;
+RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER cgpa_constraint_handler
+Before INSERT
+ON isGoingToTake
+FOR EACH ROW
+EXECUTE PROCEDURE cg_constraint_checking();
+
+--trigger to check if the course student going to insert is fulfilling pre-requisites or not
+CREATE OR REPLACE FUNCTION full_filling_preRequisite()
+RETURNS TRIGGER
+LANGUAGE PLPGSQL
+AS $$
+DECLARE
+pre record;
+grad integer := 0;
+BEGIN
+for pre in (select * from PreRequisite where PreRequisite.Course_id=New.Course_id)
+loop
+    if pre.preRequisite_course_code in (select historyOfStudent.Course_id from historyOfStudent where historyOfStudent.entry_num=New.entry_num)
+    then
+        grad := (select historyOfStudent.grade from historyOfStudent where historyOfStudent.entry_num=New.entry_num and New.Course_id=historyOfStudent.Course_id);
+        if grad<4
+        then raise exception 'student has not fulfilled pre-requisites of the course';
+        end if;
+    else
+        raise exception 'student has not fulfilled pre-requisites of the course';
+    end if;
+end loop;
+RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER preRequisites_handler
+Before INSERT
+ON isGoingToTake
+FOR EACH ROW
+EXECUTE PROCEDURE full_filling_preRequisite();
+
+
+
+--trigger to check if the course, student going to insert is fulfilling the batch criteria or not
+
+CREATE OR REPLACE FUNCTION batch_criteria_checking()
+RETURNS TRIGGER
+LANGUAGE PLPGSQL
+AS $$
+DECLARE
+yr integer := 0;
+dep varchar(255);
+_unit record;
+flag integer := 0; 
+BEGIN
+    dep := (select DISTINCT Student.dept_name from Student where Student.entry_num=New.entry_num);
+    yr := (select DISTINCT Student.yearOfAdmission from Student where Student.entry_num=New.entry_num);
+    for _unit in (select * from BatchesAllowed where BatchesAllowed.Course_id=New.Course_id)
+    loop
+        if dep = _unit.dept_name and yr = _unit.yearOfAdmission
+        then flag := flag + 1;
+        end if;
+    end loop;
+    if flag = 0
+    then raise exception 'student has not fulfilled batch-criteria of the course';
+    end if;
+RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER batch_criteria_handler
+Before INSERT
+ON isGoingToTake
+FOR EACH ROW
+EXECUTE PROCEDURE batch_criteria_checking();
+
+
+----------------------------------------------------------------------------------------
+
+--testing pending
+
+CREATE OR REPLACE FUNCTION credit_limit_checking()
+RETURNS TRIGGER
+LANGUAGE PLPGSQL
+AS $$
+DECLARE
+checking dec(10,2) := 0;
+credit1 dec(10,2) := 0;
+credit2 dec(10,2) := 0;
+credit3 dec(10,2) := 0;
+
+_unit record;
+ 
+BEGIN
+    for _unit in (select * from historyOfStudent where historyOfStudent.entry_num=New.entry_num and historyOfStudent.sem=(New.semester-1))
+    loop
+    if(_unit.grade >= 4)
+    then credit1 := _unit.credit + credit1;
+    end if;
+
+    end loop;
+
+    for _unit in (select * from historyOfStudent where historyOfStudent.entry_num=New.entry_num and historyOfStudent.sem=(New.semester-2))
+    loop
+    if(_unit.grade >= 4)
+    then credit2 := _unit.credit + credit2;
+    end if;
+    end loop;
+
+    for _unit in (select * from isGoingToTake where isGoingToTake.entry_num=New.entry_num and isGoingToTake.sem=(New.semester))
+    loop
+    if(_unit.grade >= 4)
+    then credit3 := _unit.credit + credit3;
+    end if;
+    end loop;
+
+    credit3 := credit3 + (select DISTINCT CourseCatalogue.Credit from CourseCatalogue where CourseCatalogue.Course_id=New.Course_id);
+    checking := (credit1 + credit2)/2;
+    checking := checking * 1.25;
+    if(credit3 > checking)
+    THEN raise exception 'credit limit will increase after taking this course';
+    end if;
+
+
+RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER credit_limit_handler
+Before INSERT
+ON isGoingToTake
+FOR EACH ROW
+EXECUTE PROCEDURE credit_limit_checking();
+----------------------------------------------------------------------------------------------------
+--testing pending
+
+
+
+CREATE OR REPLACE FUNCTION check_clashes_time_slot()
+RETURNS TRIGGER
+LANGUAGE PLPGSQL
+AS $$
+DECLARE
+--declared something
+_unit record;
+_slot record;
+flag integer := 0;
+BEGIN
+for _unit in (select * from  TimeSlot where TimeSlot.Course_id=New.Course_id and TimeSlot.Course_id in (select isGoingToTake.Course_id from isGoingToTake where New.entry_num=isGoingToTake.entry_num))
+loop
+    for _slot in (select * from TimeSlot where TimeSlot.Course_id!=New.Course_id and TimeSlot.Course_id in (select isGoingToTake.Course_id from isGoingToTake where New.entry_num=isGoingToTake.entry_num))
+    loop
+        --condition we will have to think
+        if(_unit.Duration = _slot.Duration and _unit.startingTime=_slot.startingTime and _unit.endingTime=_slot.endingTime)
+        then flag := flag + 1;
+        ELSE
+            raise exception 'time slot % is clashing with other courses',_unit;
+        end if;
+    end loop;
+end loop;
+RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER clashes_time_slot
+Before INSERT
+ON isGoingToTake
+FOR EACH ROW
+EXECUTE PROCEDURE check_clashes_time_slot();
+
+-----------------------------------------------------------------------------------------

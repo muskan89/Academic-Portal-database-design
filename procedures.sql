@@ -67,3 +67,97 @@ $$;
 --to call it use this but ensure foreign key data is already present in the respective tables
 select * from CalculateCGPA(_entry_num);
 --CalculateCGPA procedure done
+
+
+
+
+--trigger to check if the course, student going to insert is fulfilling the cg constraint or not
+CREATE OR REPLACE FUNCTION cg_constraint_checking()
+RETURNS TRIGGER
+LANGUAGE PLPGSQL
+AS $$
+DECLARE
+cgpa dec(10,2) := 0;
+BEGIN
+    cgpa := (select Student.cg from Student where Student.entry_num=New.entry_num);
+    if(cgpa < (select CourseOfferings.cgConstraint from CourseOfferings where CourseOfferings.Course_id=New.Course_id))
+    then raise exception 'student has not fulfilled cgpa-constraint of the course';
+    end if;
+RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER cgpa_constraint_handler
+Before INSERT
+ON isGoingToTake
+FOR EACH ROW
+EXECUTE PROCEDURE cg_constraint_checking();
+
+
+
+
+--trigger to check if the course student going to insert is fulfilling pre-requisites or not
+CREATE OR REPLACE FUNCTION full_filling_preRequisite()
+RETURNS TRIGGER
+LANGUAGE PLPGSQL
+AS $$
+DECLARE
+pre record;
+grad integer := 0;
+BEGIN
+for pre in (select * from PreRequisite where PreRequisite.Course_id=New.Course_id)
+loop
+    if pre.preRequisite_course_code in (select historyOfStudent.Course_id from historyOfStudent where historyOfStudent.entry_num=New.entry_num)
+    then
+        grad := (select historyOfStudent.grade from historyOfStudent where historyOfStudent.entry_num=New.entry_num and New.Course_id=historyOfStudent.Course_id);
+        if grad<4
+        then raise exception 'student has not fulfilled pre-requisites of the course';
+        end if;
+    else
+        raise exception 'student has not fulfilled pre-requisites of the course';
+    end if;
+end loop;
+RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER preRequisites_handler
+Before INSERT
+ON isGoingToTake
+FOR EACH ROW
+EXECUTE PROCEDURE full_filling_preRequisite();
+
+
+
+--trigger to check if the course, student going to insert is fulfilling the batch criteria or not
+
+CREATE OR REPLACE FUNCTION batch_criteria_checking()
+RETURNS TRIGGER
+LANGUAGE PLPGSQL
+AS $$
+DECLARE
+yr integer := 0;
+dep varchar(255);
+_unit record;
+flag integer := 0; 
+BEGIN
+    dep := (select DISTINCT Student.dept_name from Student where Student.entry_num=New.entry_num);
+    yr := (select DISTINCT Student.yearOfAdmission from Student where Student.entry_num=New.entry_num);
+    for _unit in (select * from BatchesAllowed where BatchesAllowed.Course_id=New.Course_id)
+    loop
+        if dep = _unit.dept_name and yr = _unit.yearOfAdmission
+        then flag := flag + 1;
+        end if;
+    end loop;
+    if flag = 0
+    then raise exception 'student has not fulfilled batch-criteria of the course';
+    end if;
+RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER batch_criteria_handler
+Before INSERT
+ON isGoingToTake
+FOR EACH ROW
+EXECUTE PROCEDURE batch_criteria_checking();
