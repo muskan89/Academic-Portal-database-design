@@ -456,3 +456,267 @@ Before INSERT
 ON CourseOfferings
 FOR EACH ROW
 EXECUTE PROCEDURE LTPSC_same_or_not();
+
+
+
+
+--trigger to check if the department or same user id faculties same or not in tables "faculty and batch_advisor"
+CREATE OR REPLACE FUNCTION with_id_dept_same_or_not()
+RETURNS TRIGGER
+LANGUAGE PLPGSQL
+AS $$
+DECLARE
+one varchar(255);
+two varchar(255);
+BEGIN
+one := (select distinct Faculty.dept_name from Faculty where Faculty.id=New.id);
+two := New.dept_name;
+if(one != two)
+then raise exception 'Faculty and batch_advisor with same id cannot have different department';
+end if;
+RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER with_id_dept_checker
+Before INSERT
+ON Batch_Advisor
+FOR EACH ROW
+EXECUTE PROCEDURE with_id_dept_same_or_not();
+
+
+
+--trigger to ensure instructor_id of the course to be inserted should be same as the user
+--and the department of the course_id of the row should be same as the course_id’s
+--department in course catalogue and user’s department is also same as the course’s
+--department that is to be inserted
+CREATE OR REPLACE FUNCTION course_offerings_some_criteria()
+RETURNS TRIGGER
+LANGUAGE PLPGSQL
+AS $$
+DECLARE
+one varchar(255);
+two varchar(255);
+three varchar(255);
+four varchar(255);
+BEGIN
+one := (select current_user);
+two := New.Instructor_id;
+if(one != two)
+then raise exception 'Someone else is trying to modify others data in the table';
+end if;
+
+three := (select distinct Faculty.dept_name where Faculty.id=one);
+if(three != New.dept_name)
+then raise exception 'Department of user and course is different';
+end if;
+
+four := (select distinct CourseCatalogue.dept_name from CourseCatalogue where CourseCatalogue.Course_id=New.Course_id);
+if(four != New.dept_name)
+then raise exception 'Department of course is different from CourseCatalogue';
+end if;
+
+
+
+RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER course_offerings_other_criteria_insert_checker
+Before INSERT
+ON CourseOfferings
+FOR EACH ROW
+EXECUTE PROCEDURE course_offerings_some_criteria();
+
+CREATE TRIGGER course_offerings_other_criteria_update_checker
+Before UPDATE
+ON CourseOfferings
+FOR EACH ROW
+EXECUTE PROCEDURE course_offerings_some_criteria();
+
+
+
+
+
+
+
+
+
+--trigger to make create tables for students transcript at time of getting them into student table
+CREATE OR REPLACE FUNCTION make_student_transcript_table()
+RETURNS TRIGGER
+LANGUAGE PLPGSQL
+AS $$
+BEGIN
+execute format('CREATE TABLE %I (Course_id varchar(255), grade int, credit dec(10,2),sem int);', 'transcript_entry_num_' || New.entry_num::text);
+execute format('Grant select on %I to %I','transcript_entry_num_' || New.entry_num::text,'s_'||New.entry_num); 
+RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER student_transcript_table
+After INSERT
+ON Student
+FOR EACH ROW
+EXECUTE PROCEDURE make_student_transcript_table();
+
+
+--stored procedure to generating transcript
+CREATE OR REPLACE FUNCTION generateTranscript(_entry_num varchar(255),_sem int)
+RETURNS table(Course_id varchar(255), grade int, credit dec(10,2),sem int)
+LANGUAGE plpgsql
+AS $$
+DECLARE
+unit record;
+BEGIN
+for unit in (select * from historyOfStudent where historyOfStudent.entry_num=_entry_num and historyOfStudent.sem=_sem)
+loop
+execute format('insert into %I values(%L,%L,%L,%L)','transcript_entry_num_' || _entry_num::text,unit.Course_id,unit.grade,unit.credit,unit.sem);
+end loop;
+
+return query execute format('select * from %I ','transcript_entry_num_' || _entry_num::text); 
+END;
+$$;
+
+
+
+
+--testing pending
+
+CREATE OR REPLACE FUNCTION credit_limit_checking()
+RETURNS TRIGGER
+LANGUAGE PLPGSQL
+AS $$
+DECLARE
+checking dec(10,2) := 0;
+credit1 dec(10,2) := 0;
+credit2 dec(10,2) := 0;
+credit3 dec(10,2) := 0;
+
+_unit record;
+ 
+BEGIN
+    for _unit in (select * from historyOfStudent where historyOfStudent.entry_num=New.entry_num and historyOfStudent.sem=(New.semester-1))
+    loop
+    if(_unit.grade >= 4)
+    then credit1 := _unit.credit + credit1;
+    end if;
+
+    end loop;
+
+    for _unit in (select * from historyOfStudent where historyOfStudent.entry_num=New.entry_num and historyOfStudent.sem=(New.semester-2))
+    loop
+    if(_unit.grade >= 4)
+    then credit2 := _unit.credit + credit2;
+    end if;
+    end loop;
+
+    for _unit in (select * from isGoingToTake where isGoingToTake.entry_num=New.entry_num and isGoingToTake.sem=(New.semester))
+    loop
+    if(_unit.grade >= 4)
+    then credit3 := _unit.credit + credit3;
+    end if;
+    end loop;
+
+    credit3 := credit3 + (select DISTINCT CourseCatalogue.Credit from CourseCatalogue where CourseCatalogue.Course_id=New.Course_id);
+    checking := (credit1 + credit2)/2;
+    checking := checking * 1.25;
+    if(credit3 > checking)
+    THEN 
+    execute format('insert into studentsTicketRequest values(%L,%L,%L,%L,%L,%L)',New.entry_num,New.semester,New.Course_id,NULL,NULL,NULL);
+    raise exception 'credit limit will increase after taking this course';
+    end if;
+
+
+RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER credit_limit_handler
+Before INSERT
+ON isGoingToTake
+FOR EACH ROW
+EXECUTE PROCEDURE credit_limit_checking();
+
+--trigger to make send ticket request to faculty
+CREATE OR REPLACE FUNCTION move_to_faculty_ticket()
+RETURNS TRIGGER
+LANGUAGE PLPGSQL
+AS $$
+BEGIN
+execute format('insert into facultyTicketinfo values(%L,%L,%L,%L,%L,%L)',New.entry_num,New.sem,New.Course_id,NULL,NULL,NULL);
+RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER to_faculty_ticket
+After INSERT
+ON studentsTicketRequest
+FOR EACH ROW
+EXECUTE PROCEDURE move_to_faculty_ticket();
+
+
+--trigger to make send ticket request to batch advisor
+CREATE OR REPLACE FUNCTION move_to_batchAdvisor_ticket()
+RETURNS TRIGGER
+LANGUAGE PLPGSQL
+AS $$
+BEGIN
+execute format('insert into BatchAdvisorTicketinfo values(%L,%L,%L,%L,%L,%L)',New.entry_num,New.sem,New.Course_id,New.facultyPermission,NULL,NULL);
+RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER to_batchAdvisor_ticket
+After UPDATE
+ON facultyTicketinfo
+FOR EACH ROW
+EXECUTE PROCEDURE move_to_batchAdvisor_ticket();
+
+
+--trigger to make send ticket request to dean
+CREATE OR REPLACE FUNCTION move_to_dean_ticket()
+RETURNS TRIGGER
+LANGUAGE PLPGSQL
+AS $$
+BEGIN
+execute format('insert into DeanTicketInfo values(%L,%L,%L,%L,%L,%L)',New.entry_num,New.sem,New.Course_id,New.facultyPermission,New.BatchAdvisorPermission,NULL);
+RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER to_dean_ticket
+After UPDATE
+ON BatchAdvisorTicketinfo
+FOR EACH ROW
+EXECUTE PROCEDURE move_to_dean_ticket();
+
+
+--trigger to raise notice if dean refused and add course in table courseThroughTicket if he or she agreed.
+CREATE OR REPLACE FUNCTION checking_dean_permission()
+RETURNS TRIGGER
+LANGUAGE PLPGSQL
+AS $$
+DECLARE
+_credit varchar(255); 
+_Sec_id int;
+_yearOfAdmission int;
+BEGIN
+_credit=(select DISTINCT CourseCatalogue.Credit from CourseCatalogue where CourseCatalogue.Course_id=New.Course_id);
+_yearOfAdmission=(select DISTINCT Student.yearOfAdmission from Student where Student.entry_num=New.entry_num);
+if New.DeanPermission = 'Yes'
+THEN execute format('insert into courseThroughTicket values(%L,%L,%L,%L,%L,%L)',New.entry_num,New.Course_id,_credit,NULL,_yearOfAdmission,New.sem);
+else
+raise notice 'ticket got rejected by dean';
+end if;
+RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER _dean_permission
+After UPDATE
+ON DeanTicketInfo
+FOR EACH ROW
+EXECUTE PROCEDURE checking_dean_permission();
+
+
