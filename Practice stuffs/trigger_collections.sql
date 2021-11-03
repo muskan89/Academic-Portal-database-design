@@ -500,7 +500,7 @@ two varchar(255);
 three varchar(255);
 four varchar(255);
 BEGIN
-one := (select current_user);
+one :=  current_user;
 two := New.Instructor_id;
 if(one != two)
 then raise exception 'Someone else is trying to modify others data in the table';
@@ -720,3 +720,176 @@ FOR EACH ROW
 EXECUTE PROCEDURE checking_dean_permission();
 
 
+
+
+
+
+
+CREATE OR REPLACE FUNCTION CalculateCGPA(_entry_num varchar(255))
+RETURNS dec(10,2)
+LANGUAGE plpgsql
+AS $$
+DECLARE
+points dec(10,2) := 0;
+multi dec(10,2) := 0;
+totalCredits dec(10,2) := 0;
+cgpa dec(10,2);
+see record;
+BEGIN
+
+for see in (select transcript_entry_num_.grade,historyOfStudent.credit from historyOfStudent where historyOfStudent.entry_num=_entry_num)loop
+multi := (see.grade) * (see.credit);
+points := points + multi;
+totalCredits := totalCredits + (see.credit);
+end loop;
+
+cgpa := (points/totalCredits);
+
+update student
+set cg = cgpa
+where student.entry_num=_entry_num;
+
+update student
+set total_credits = totalCredits
+where student.entry_num=_entry_num;
+
+
+return cgpa;
+END;
+$$;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+CREATE OR REPLACE FUNCTION course_offerings_some_criteria()
+RETURNS TRIGGER
+LANGUAGE PLPGSQL
+AS $$
+DECLARE
+one varchar(255);
+two varchar(255);
+BEGIN
+one :=  current_user;
+two := lower(old.Instructor_id);
+if(one != two)
+then raise exception 'Someone else is trying to delete others data in the table';
+end if;
+
+RETURN old;
+END;
+$$;
+
+CREATE TRIGGER course_offerings_delete_checker
+Before DELETE
+ON CourseOfferings
+FOR EACH ROW
+EXECUTE PROCEDURE course_offerings_delete();
+
+
+
+
+CREATE OR REPLACE FUNCTION invalid_access()
+RETURNS TRIGGER
+LANGUAGE PLPGSQL
+AS $$
+DECLARE
+real_usrr varchar(255);
+BEGIN
+    if(current_user <> old.entry_num)
+    THEN raise exception 'someone else is trying to interupt in others data';
+    end if;
+RETURN old;
+END;
+$$;
+
+CREATE TRIGGER delete_fault
+Before Delete
+ON isGoingToTake
+FOR EACH ROW
+EXECUTE PROCEDURE invalid_access();
+
+CREATE TRIGGER update_fault
+Before Update
+ON isGoingToTake
+FOR EACH ROW
+EXECUTE PROCEDURE invalid_access();
+
+
+
+
+CREATE OR REPLACE FUNCTION ticketGenerate(_entry_num varchar(255),_course_id VARCHAR(255),_Sem integer)
+RETURNS void
+LANGUAGE plpgsql
+AS $$
+BEGIN
+execute format('insert into studentsTicketRequest values(%L,%L,%L,%L,%L,%L)',_entry_num,_Sem,New._course_id,NULL,NULL,NULL);
+END;
+$$;
+
+
+
+
+
+
+
+
+
+
+
+CREATE OR REPLACE FUNCTION move_to_batchAdvisor_ticket()
+RETURNS TRIGGER
+LANGUAGE PLPGSQL
+AS $$
+BEGIN
+
+
+if(current_user <> (select distinct courseofferings.Instructor_id from courseofferings where courseofferings.course_id=New.Course_id))
+THEN raise exeption 'faculty who is updating is not even offering any course currently';
+end if;
+
+execute format('insert into BatchAdvisorTicketinfo values(%L,%L,%L,%L,%L,%L)',New.entry_num,New.sem,New.Course_id,New.facultyPermission,NULL,NULL);
+RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER to_batchAdvisor_ticket
+After UPDATE
+ON facultyTicketinfo
+FOR EACH ROW
+EXECUTE PROCEDURE move_to_batchAdvisor_ticket();
+
+
+
+
+CREATE OR REPLACE FUNCTION move_to_dean_ticket()
+RETURNS TRIGGER
+LANGUAGE PLPGSQL
+AS $$
+BEGIN
+if((select distinct Batch_Advisor.dept_name from Batch_Advisor where Batch_Advisor.id=upper(current_user)) <> (select distinct student.dept_name from student where student.entry_num=New.entry_num))
+THEN raise exception 'batch advisor who is updating is not advisor of student';
+end if;
+if((select distinct Batch_Advisor.Batch_year from Batch_Advisor where Batch_Advisor.id=upper(current_user)) <> (select distinct student.yearOfAdmission from student where student.entry_num=New.entry_num))
+THEN raise exception 'batch advisor who is updating is not advisor of student';
+end if;
+execute format('insert into DeanTicketInfo values(%L,%L,%L,%L,%L,%L)',New.entry_num,New.sem,New.Course_id,New.facultyPermission,New.BatchAdvisorPermission,NULL);
+RETURN NEW;
+END;
+$$;
+
+CREATE TRIGGER to_dean_ticket
+After UPDATE
+ON BatchAdvisorTicketinfo
+FOR EACH ROW
+EXECUTE PROCEDURE move_to_dean_ticket();
