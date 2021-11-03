@@ -160,10 +160,15 @@ Course_id varchar(255),
 Duration varchar(255),
 startingTime varchar(255),
 endingTime varchar(255),
+
 foreign key(Course_id) references CourseCatalogue(course_id)
 );
 
-
+CREATE TABLE Day_table
+(
+   day varchar(255),
+   PRIMARY KEY(day)
+);
 
 
 CREATE TABLE courseThroughTicket
