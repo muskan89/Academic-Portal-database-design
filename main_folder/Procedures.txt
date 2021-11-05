@@ -40,9 +40,12 @@ then raise exception 'Invalid Access';
 end if;
 
 for see in (select historyOfStudent.grade,historyOfStudent.credit from historyOfStudent where historyOfStudent.entry_num=_entry_num)loop
+if(see.grade>=4)
+then
 multi := (see.grade) * (see.credit);
 points := points + multi;
 totalCredits := totalCredits + (see.credit);
+end if;
 end loop;
 
 
