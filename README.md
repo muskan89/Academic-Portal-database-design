@@ -1,1 +1,3 @@
-# DBMS-project1
+# DBMS-project
+
+An Academic portal
