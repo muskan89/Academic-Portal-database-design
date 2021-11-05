@@ -15,8 +15,6 @@ PRIMARY KEY (Course_id),
 Foreign KEY (dept_name) REFERENCES Department(dept_name)
 );
 
-
-
 CREATE TABLE Faculty
 (
     name varchar(255),
@@ -50,8 +48,7 @@ foreign key (dept_name) references Department(dept_name),
 foreign key (Instructor_id) references Faculty(id)
 );
 
-
-CREATE TABLE PreRequisite
+REATE TABLE PreRequisite
 (
 Course_id varchar(255),
 preRequisite_course_code varchar(255),
@@ -160,7 +157,6 @@ Course_id varchar(255),
 Duration varchar(255),
 startingTime varchar(255),
 endingTime varchar(255),
-
 foreign key(Course_id) references CourseCatalogue(course_id)
 );
 
