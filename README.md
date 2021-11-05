@@ -1,3 +1,3 @@
 # DBMS-project
 
-An Academic portal
+Designed database of An Academic portal
