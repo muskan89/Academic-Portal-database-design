@@ -48,7 +48,7 @@ foreign key (dept_name) references Department(dept_name),
 foreign key (Instructor_id) references Faculty(id)
 );
 
-REATE TABLE PreRequisite
+CREATE TABLE PreRequisite
 (
 Course_id varchar(255),
 preRequisite_course_code varchar(255),
